@@ -101,11 +101,67 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 # Step 2: Load data
 
 ```{r}
+data = read_sav("data/Same-Sex Marriage Dataset.sav")
+colnames(data)
 ```
 
 # Step 3: Tidy data
 
 ```{r}
+colnames(data)[1] = "id"
+error_latency_cols <- colnames(data)[grep(glob2rx("*_ERROR_latency"), colnames(data))]
+correct_latency_cols <- colnames(data)[grep(glob2rx("*_CORRECT_latency"), colnames(data))]
+stimulus_cols <- colnames(data)[grep(glob2rx("*#*_stimulus"), colnames(data))]
+latency_cols <- colnames(data)[grep(glob2rx("*#*_latency"), colnames(data))]
+
+ignore_indices  <- append(grep(glob2rx("*_ERROR_latency"), colnames(data)), grep(glob2rx("*#*_stimulus"), colnames(data)))
+
+ignore_indices <- append(ignore_indices, grep(glob2rx("*#*_latency"), colnames(data)))
+ignore_indices <- append(ignore_indices, grep(glob2rx("*_CORRECT_latency"), colnames(data)))
+
+ignore_indices <- unique(ignore_indices)
+#ignore_indices
+ignore_names <- colnames(data)[ignore_indices]
+use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
+
+use_names <- colnames(data)[use_indices]
+
+new_col_names <- list("stimulus", "latency", "error_latency", "correct_latency")
+updated_col_names <- append(use_names, new_col_names) 
+
+dim(data)
+#length(colnames(data))
+#length(updated_col_names)
+#length(use_names)
+#length(ignore_indices)
+
+gathered_data <- data %>% 
+  gather(subj, value, ignore_names)
+
+dim(gathered_data)
+
+
+  
+#now we have rows, but we want things grouped by task/response
+IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
+task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
+cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
+#IAT_nums
+#task_nums
+#cond_nums
+#length(IAT_nums)
+#length(task_nums)
+#length(cond_nums)
+
+spread_data <- gathered_data %>%
+  mutate(IAT_num = str_extract(value, "[0-9]{4}")) %>%
+  mutate(task_nums = str_extract(value, "Task_[0-9]{1}")) %>%
+  mutate(task_nums = str_extract(value, "#[0-9]{1}")) %>%
+  mutate(trial = str_extract(value, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}"))
+dim(spread_data)
+
+t1 = str_extract(ignore_names, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")
+t1
 ```
 
 # Step 4: Run analysis
