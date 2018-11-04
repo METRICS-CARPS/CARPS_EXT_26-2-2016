@@ -30,10 +30,7 @@ completionDate <- NA # copilot insert the date of final report completion (after
 
 [PILOT/COPILOT write a brief summary of the methods underlying the target outcomes written in your own words]
 
-The study began with 1437 particpants on MTurk, but the final sample 
-contained 1085 participants, after restricting the sample to those who 
-reported they are heterosexual and who passed the attention check in 
-the IAT. The authors designed a custom Implicit Association Test (IAT) 
+The authors designed a custom Implicit Association Test (IAT) 
 to measure participants' implicit associations between homosexuality 
 and sexual promiscuity. They randomly assigned participants to either 
 the "gay men" or "lesbian" condition. There were four trials in the IAT. 
@@ -45,7 +42,8 @@ five words related to either promiscuity or monogamy and images of gay
 or lesbian couples. The authors compared the response times of 
 associations between "gay" and "promiscuous" and "gay" and "monogamous" 
 to measure particpants' mental associations between the terms "gay" and 
-"promiscuous."
+"promiscuous." The study was conducted on MTurk with a final sample size of
+1085 participants.
 
 ------
 
@@ -102,7 +100,7 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 
 ```{r}
 data = read_sav("data/Same-Sex Marriage Dataset.sav")
-#colnames(data)
+head(data)
 ```
 
 
@@ -112,42 +110,50 @@ colnames(data)[1] = "id"
 
 
 # Step 3: Tidy data
-
 ```{r}
-#get ERROR_latency columns
-error_latency_cols <- colnames(data)[grep(glob2rx("*_ERROR_latency"), colnames(data))]
-#get CORRECT_latency columns
-correct_latency_cols <- colnames(data)[grep(glob2rx("*_CORRECT_latency"), colnames(data))]
-#get stimulus columns
-stimulus_cols <- colnames(data)[grep(glob2rx("*#*_stimulus"), colnames(data))]
-#get latency columns
-latency_cols <- colnames(data)[grep(glob2rx("*#*_latency"), colnames(data))]
-
-#get the names of all the columns for latency and stimuli
-ignore_indices  <- append(grep(glob2rx("*_ERROR_latency"), colnames(data)), grep(glob2rx("*#*_stimulus"), colnames(data)))
-ignore_indices <- append(ignore_indices, grep(glob2rx("*#*_latency"), colnames(data)))
-ignore_indices <- append(ignore_indices, grep(glob2rx("*_CORRECT_latency"), colnames(data)))
-ignore_indices <- unique(ignore_indices)
-ignore_names <- colnames(data)[ignore_indices]
-
-#get all the cols that don't have to do with the actual IAT trials
-use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
-use_names <- colnames(data)[use_indices]
-
-dim(data)
-#IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
-#task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
-#cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
+# #get ERROR_latency columns
+# error_latency_cols <- colnames(data)[grep(glob2rx("*_ERROR_latency"), colnames(data))]
+# #get CORRECT_latency columns
+# correct_latency_cols <- colnames(data)[grep(glob2rx("*_CORRECT_latency"), colnames(data))]
+# #get stimulus columns
+# stimulus_cols <- colnames(data)[grep(glob2rx("*#*_stimulus"), colnames(data))]
+# #get latency columns
+# latency_cols <- colnames(data)[grep(glob2rx("*#[0-9]{1}_latency|*#[0-9]{2}_latency"), colnames(data))]
+# 
+# #get the names of all the columns for latency and stimuli
+# ignore_indices  <- append(grep(glob2rx("*_ERROR_latency"), colnames(data)), grep(glob2rx("*#*_stimulus"), colnames(data)))
+# ignore_indices <- append(ignore_indices, grep(glob2rx("*#*_latency"), colnames(data)))
+# ignore_indices <- append(ignore_indices, grep(glob2rx("*_CORRECT_latency"), colnames(data)))
+# ignore_indices <- unique(ignore_indices)
+# ignore_names <- colnames(data)[ignore_indices]
+# 
+# #get all the cols that don't have to do with the actual IAT trials
+# use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
+# use_names <- colnames(data)[use_indices]
+# 
+# dim(data)
+# #IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
+# #task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
+# #cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
 ```
 
+```{r}
+#subset the data to focus on the variables we care about
+#note that each row becomes a particular individual's IAT score rather than each question 
+#of the test (i.e., there's a 1-1 mapping for id to IAT score)
+subset_data <- data %>%
+  select(id, Condition, Gender, SexualOrientation, `Filter_$`, IATscore)
 
+head(subset_data)
+dim(subset_data)
+```
 
 ```{r}
-gathered_data <- data %>% 
-  gather(task_name, value, c(ignore_names))
+#gathered_data <- data %>% 
+  #gather(task_name, value, c(ignore_names))
 
-dim(gathered_data)
-head(gathered_data)
+#dim(gathered_data)
+#head(gathered_data)
 ```
 
 
@@ -157,24 +163,23 @@ head(gathered_data)
 #task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
 #cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
 
-unique(gathered_data["task_name"])
-spread_data <- gathered_data %>%
-  mutate(IAT_num = str_extract(task_name, "[0-9]{4}")) %>%
-  mutate(task_nums = str_extract(task_name, "Task_[0-9]{1}")) %>%
-  mutate(trial_nums = str_extract(task_name, "#[0-9][0-9]|#[0-9]")) %>%
-  mutate(trial = str_extract(task_name, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9][0-9]|IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")) %>%
-  mutate(measurement_type = str_extract(task_name, "_ERROR_latency|_CORRECT_latency|_latency|_stimulus"))
+#unique(gathered_data["task_name"])
+#spread_data <- gathered_data %>%
+  #mutate(IAT_num = str_extract(task_name, "[0-9]{4}")) %>%
+  #mutate(task_nums = str_extract(task_name, "Task_[0-9]{1}")) %>%
+  #mutate(trial_nums = str_extract(task_name, "#[0-9][0-9]|#[0-9]")) %>%
+  #mutate(trial = str_extract(task_name, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9][0-9]|IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")) %>%
+  #mutate(measurement_type = str_extract(task_name, "_ERROR_latency|_CORRECT_latency|_latency|_stimulus"))
 
-dim(spread_data)
-measurement_types = unique(spread_data["measurement_type"])
-measurement_types
-head(spread_data)
-unique(spread_data["IAT_num"])
-unique(spread_data["task_nums"])
-unique(spread_data["trial_nums"])
-unique(spread_data["trial"])
+#dim(spread_data)
+#measurement_types = unique(spread_data["measurement_type"])
+#measurement_types
+#head(spread_data)
+#unique(spread_data["IAT_num"])
+#unique(spread_data["task_nums"])
+#unique(spread_data["trial_nums"])
+#unique(spread_data["trial"])
 ```
-
 
 # Step 4: Run analysis
 
@@ -183,48 +188,116 @@ unique(spread_data["trial"])
 [you can remove this section if no pre-processing is required]
 
 ```{r}
-bad_ids = c(19,22,67,93,118,120,136,152,162,166,170,175,177,178,259,350,369,386,394,411,424,453,462,501,553,555,572,583,679,708,757,794,833,875,911,932,1010,1052,1092,1096,1123,1124,1201,1227,1267,1318,1322,1426)
-filtered_data_manual <- data[!is.element(data$id, bad_ids),]
-filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck1` > 4)
-filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck2` > 4)
-filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck3` < 4)
+# bad_ids = c(19,22,67,93,118,120,136,152,162,166,170,175,177,178,259,350,369,386,394,411,424,453,462,501,553,555,572,583,679,708,757,794,833,875,911,932,1010,1052,1092,1096,1123,1124,1201,1227,1267,1318,1322,1426)
+# filtered_data_manual <- data[!is.element(subset_data$id, bad_ids),]
+# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck1` > 4)
+# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck2` > 4)
+# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck3` < 4)
+# filtered_data_manual <- filter(filtered_data_manual, !is.na(filtered_data_manual$IATscore))
+#dim(filtered_data_manual)
 
-
-filtered_data <- filter(data, `Filter_$` == 1)
-dim(filtered_data_manual)
+#use the provided filter column to filter data -- but also filter based on NA values
+filtered_data <- filter(subset_data, `Filter_$` == 1 & !is.na(Condition) & !is.na(IATscore) & !is.na(Gender))
 dim(filtered_data)
 
 ```
 
+
 ## Descriptive statistics
 
 ```{r}
+#analysis text:
+#The mean IAT score across both conditions was 0.59 (SD =0.42), which indicates that 
+#participants’ reaction times were,on average, 0.59 standard deviations faster when 
+#“gay” and “promiscuous” were paired than when “gay” and “monogamous” were paired.
+
+mean_IAT_score <- filtered_data %>%
+  group_by(id) %>%
+  summarise(mean_score_by_person = mean(IATscore, na.rm=TRUE)) %>%
+  summarise(mean_score = mean(mean_score_by_person, na.rm=TRUE), sd_score = sd(mean_score_by_person, na.rm = TRUE))
+
+mean_IAT_score
 
 ```
 
 ## Inferential statistics
+```{r}
+#analysis text:
+#Participants in the lesbians condition showed slightly greater 
+#implicit associations between “gay” and “promiscuous” (M = 0.62, SD = 0.42) 
+#than participants in the gay-men condition did (M = 0.56, SD = 0.41), t(1083) = 2.56, p < .05.
+mean_IAT_score_cond <- filtered_data %>%
+  group_by(Condition) %>%
+  summarise(mean_score_cond = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
+
+mean_IAT_score_cond
+
+
+cond0_data <- filter(filtered_data, filtered_data$Condition == 0)
+cond1_data <- filter(filtered_data, filtered_data$Condition == 1)
+dim(cond0_data)
+dim(cond1_data)
+t.test(cond0_data$IATscore,cond1_data$IATscore)
+
+```
+
 
 ```{r}
+#analysis text:
+#Follow-up analyses revealed that
+#this effect was qualified by a significant interaction with
+#gender, F(1, 1081) = 7.42, p < .01.
+fit <- aov(filtered_data$IATscore ~ filtered_data$Gender * filtered_data$Condition)
+summary(fit)
 ```
+
+```{r}
+#Among men, IAT scores
+#were significantly higher in the lesbians condition (M =
+#0.67, SD = 0.39) than in the gay-men condition (M = 0.53,
+#SD = 0.40), F(1, 1081) = 13.61, p < .001, whereas among
+#women, there was no significant difference in IAT scores
+#between the two conditions, F(1, 1081) = 0.01, p = .92.
+mean_IAT_score_cond_gender <- filtered_data %>%
+  group_by(Condition, Gender) %>%
+  summarise(mean_score_cond_gender = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
+
+mean_IAT_score_cond_gender
+dim(filtered_data)
+head(filtered_data)
+men_data <- filter(filtered_data, filtered_data$Gender == 1)
+women_data <- filter(filtered_data, filtered_data$Gender == 2)
+
+fit <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
+summary(fit)
+
+fit <- aov(men_data$IATscore ~ men_data$Gender * men_data$Condition)
+summary(fit)
+```
+
 
 # Step 5: Conclusion
 
 [Please include a text summary describing your findings. If this reproducibility check was a failure, you should note any suggestions as to what you think the likely cause(s) might be.]
+
+This reproducibility check was mostly successful. We were able to replicate all of the implicit association findings except for one of the F-scores and one of the t-statistics. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher (14.9 vs. 13.61). The p-value reported (p < .001) is consistent with what we found. Also, we found a discrepancy between the t-statistic the authors reported and our value (t(1083) = 2.56 vs t(1081.6) = 2.47). Again, the p-value remains below 0.05, as the authors reported.
+
+The authors provided a list of exclusion criteria, but it appears they followed additional exclusion criteria they do not discuss in the paper. They excluded participants who did not list a gender on the survey. This additional exclusion criteria was needed to get the same participant count from the original paper.
   
 [PILOT/COPILOT ENTER RELEVANT INFORMATION BELOW]
 
 ```{r}
 Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
 
-Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
+Insufficient_Information_Errors <- 1 # how many discrete insufficient information issues did you encounter?
 
 # Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
 
-locus_typo <- NA # how many discrete issues did you encounter that related to typographical errors?
-locus_specification <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
-locus_analysis <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
-locus_data <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
-locus_unidentified <- NA # how many discrete issues were there for which you could not identify the cause
+locus_typo <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- 0 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- 1 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- 1 # how many discrete issues were there for which you could not identify the cause
 
 # How many of the above issues were resolved through author assistance?
 locus_typo_resolved <- NA # how many discrete issues did you encounter that related to typographical errors?
@@ -233,7 +306,7 @@ locus_analysis_resolved <- NA # how many discrete issues did you encounter that 
 locus_data_resolved <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
 locus_unidentified_resolved <- NA # how many discrete issues were there for which you could not identify the cause
 
-Affects_Conclusion <- NA # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+Affects_Conclusion <- FALSE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
 ```
 
 [PILOT/COPILOT DOD NOT EDIT THE CODE CHUNK BELOW]
