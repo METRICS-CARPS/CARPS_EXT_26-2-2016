@@ -102,11 +102,14 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 
 ```{r}
 data = read_sav("data/Same-Sex Marriage Dataset.sav")
-colnames(data)
+#colnames(data)
 ```
+
+
 ```{r}
 colnames(data)[1] = "id"
 ```
+
 
 # Step 3: Tidy data
 
@@ -132,14 +135,13 @@ use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
 use_names <- colnames(data)[use_indices]
 
 dim(data)
-dim(use_names)
-dim(ignore_indices)
-head(data)
-
 #IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
 #task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
 #cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
 ```
+
+
+
 ```{r}
 gathered_data <- data %>% 
   gather(task_name, value, c(ignore_names))
@@ -173,36 +175,6 @@ unique(spread_data["trial_nums"])
 unique(spread_data["trial"])
 ```
 
-
-
-```{r}
-error_latency_rows <- spread_data %>%
-  filter(measurement_type == "_ERROR_latency")
-colnames(error_latency_rows)[121] = "ERROR_latency"
-dim(error_latency_rows)
-
-correct_latency_rows <- spread_data %>%
-  filter(measurement_type == "_CORRECT_latency")
-colnames(correct_latency_rows)[121] = "CORRECT_latency"
-dim(correct_latency_rows)
-
-
-latency_rows <- spread_data %>%
-  filter(measurement_type == "_latency")
-colnames(latency_rows)[121] = "latency"
-dim(latency_rows)
-
-stimulus_rows <- spread_data %>%
-  filter(measurement_type == "_stimulus")
-colnames(stimulus_rows)[121] = "stimulus"
-dim(stimulus_rows)
-
-cannonical_data <- error_latency_rows
-cannonical_data$CORRECT_latency <- correct_latency_rows$CORRECT_latency
-cannonical_data$latency <- latency_rows$latency
-cannonical_data$stimulus <- stimulus_rows$stimulus
-dim(cannonical_data)
-```
 
 # Step 4: Run analysis
 
