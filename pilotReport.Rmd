@@ -132,40 +132,74 @@ use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
 use_names <- colnames(data)[use_indices]
 
 dim(data)
+head(data)
 
+#IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
+#task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
+#cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
+```
+```{r}
 gathered_data <- data %>% 
-  gather(subj, value, ignore_names)
+  gather(task_name, value, c(ignore_names))
 
 dim(gathered_data)
+head(gathered_data)
+```
 
+
+```{r}
 #now we have rows, but we want things grouped by task/response
-IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
-task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
-cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
+#IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
+#task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
+#cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
 
+unique(gathered_data["task_name"])
 spread_data <- gathered_data %>%
-  mutate(IAT_num = str_extract(subj, "[0-9]{4}")) %>%
-  mutate(task_nums = str_extract(subj, "Task_[0-9]{1}")) %>%
-  mutate(task_nums = str_extract(subj, "#[0-9]{1}")) %>%
-  mutate(trial = str_extract(subj, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")) %>%
-  mutate(measurement_type = substr(subj, start=18, stop=length(value)))
+  mutate(IAT_num = str_extract(task_name, "[0-9]{4}")) %>%
+  mutate(task_nums = str_extract(task_name, "Task_[0-9]{1}")) %>%
+  mutate(trial_nums = str_extract(task_name, "#[0-9][0-9]|#[0-9]")) %>%
+  mutate(trial = str_extract(task_name, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9][0-9]|IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")) %>%
+  mutate(measurement_type = str_extract(task_name, "_ERROR_latency|_CORRECT_latency|_latency|_stimulus"))
 
 dim(spread_data)
 measurement_types = unique(spread_data["measurement_type"])
+measurement_types
+head(spread_data)
+unique(spread_data["IAT_num"])
+unique(spread_data["task_nums"])
+unique(spread_data["trial_nums"])
+unique(spread_data["trial"])
+```
 
-spread_data2 <- spread_data %>%
-  mutate(isErrorLatency = measurement_type == "ERROR_latency") %>%
-  mutate(isCorrectLatency = measurement_type == "CORRECT_latency") %>%
-  mutate(isLatency = measurement_type == "latency") %>%
-  mutate(isStimulus = measurement_type == "stimulus")
-  
-spread_data2[100:110, 115:125]
-trial_names = str_extract(ignore_names, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")
 
-grouped_data <- spread_data2 %>% 
-  group_by(measurement_type)
 
-dim(grouped_data)
+```{r}
+error_latency_rows <- spread_data %>%
+  filter(measurement_type == "_ERROR_latency")
+colnames(error_latency_rows)[121] = "ERROR_latency"
+dim(error_latency_rows)
+
+correct_latency_rows <- spread_data %>%
+  filter(measurement_type == "_CORRECT_latency")
+colnames(correct_latency_rows)[121] = "CORRECT_latency"
+dim(correct_latency_rows)
+
+
+latency_rows <- spread_data %>%
+  filter(measurement_type == "_latency")
+colnames(latency_rows)[121] = "latency"
+dim(latency_rows)
+
+stimulus_rows <- spread_data %>%
+  filter(measurement_type == "_stimulus")
+colnames(stimulus_rows)[121] = "stimulus"
+dim(stimulus_rows)
+
+cannonical_data <- error_latency_rows
+cannonical_data$CORRECT_latency <- correct_latency_rows$CORRECT_latency
+cannonical_data$latency <- latency_rows$latency
+cannonical_data$stimulus <- stimulus_rows$stimulus
+dim(cannonical_data)
 ```
 
 # Step 4: Run analysis
