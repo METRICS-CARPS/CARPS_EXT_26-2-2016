@@ -209,11 +209,24 @@ dim(cannonical_data)
 [you can remove this section if no pre-processing is required]
 
 ```{r}
+bad_ids = c(19,22,67,93,118,120,136,152,162,166,170,175,177,178,259,350,369,386,394,411,424,453,462,501,553,555,572,583,679,708,757,794,833,875,911,932,1010,1052,1092,1096,1123,1124,1201,1227,1267,1318,1322,1426)
+filtered_data_manual <- data[!is.element(data$id, bad_ids),]
+filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck1` > 4)
+filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck2` > 4)
+filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck3` < 4)
+filtered_data_manual <- data[data$IAT2766_status=="completed",]
+
+filtered_data <- filter(data, `Filter_$` == 1)
+dim(filtered_data_manual)
+dim(filtered_data)
+colnames(data)
+
 ```
 
 ## Descriptive statistics
 
 ```{r}
+mean(gathered_data$IATscore, na.rm=TRUE)
 ```
 
 ## Inferential statistics
