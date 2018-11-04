@@ -16,12 +16,12 @@ output:
 articleID <- "EXT_26-2-2016" # insert the article ID code here e.g., "10-3-2015_PS"
 reportType <- "pilot" # specify whether this is the 'pilot' report or 'final' report
 pilotNames <- "Mackenzie Leake" # insert the pilot's name here e.g., "Tom Hardwicke".  If there are multiple cpilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
-copilotNames <- NA # # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
-pilotTTC <- NA # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotNames <- "Marianna Zhang" # # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+pilotTTC <- 1200 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
 copilotTTC <- NA # insert the co-pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
-pilotStartDate <- NA # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+pilotStartDate <- 11/01/18 # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 copilotStartDate <- NA # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
-completionDate <- NA # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- 11/04/18 # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
 ```
 
 ------
@@ -144,9 +144,18 @@ mean_IAT_score <- filtered_data %>%
 
 mean_IAT_score
 
+#check for matches in mean and sd
+#all means and sd in this section matched
+reported_person_mean <- "0.59"
+obtained_person_mean <- toString(round(0.589588, 2))
+reportObject <- reproCheck(reportedValue = reported_person_mean, obtainedValue = obtained_person_mean, valueType = 'mean')
+
+reported_person_sd <- "0.42"
+obtained_person_sd <- toString(round(0.4157165, 2))
+reportObject <- reproCheck(reportedValue = reported_person_sd, obtainedValue = obtained_person_sd, valueType = 'sd')
 ```
 
-## Inferential statistics
+
 ```{r}
 #target outcome: 
 #"Participants in the lesbians condition showed slightly greater 
@@ -161,11 +170,47 @@ mean_IAT_score_cond <- filtered_data %>%
 
 mean_IAT_score_cond
 
+#check for matches in mean and sd
+#all means and sd in this section matched
+reported_condition_mean_lesbian <- "0.62"
+obtained_condition_mean_lesbian <- toString(round(0.6208839, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_mean_lesbian, obtainedValue = obtained_condition_mean_lesbian, valueType = 'mean')
+
+reported_condition_sd_lesbian <- "0.42"
+obtained_condition_sd_lesbian <- toString(round(0.4202455, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_sd_lesbian, obtainedValue = obtained_condition_sd_lesbian, valueType = 'sd')
+
+reported_condition_mean_gay <- "0.56"
+obtained_condition_mean_gay <- toString(round(0.5585792, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_mean_gay, obtainedValue = obtained_condition_mean_gay, valueType = 'mean')
+
+reported_condition_sd_gay <- "0.41"
+obtained_condition_sd_gay <- toString(round(0.4092079, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_sd_gay, obtainedValue = obtained_condition_sd_gay, valueType = 'sd')
+
+```
+
+## Inferential statistics
+```{r}
+#target outcome (cont'd): 
+#"Participants in the lesbians condition showed slightly greater 
+#implicit associations between “gay” and “promiscuous” (M = 0.62, SD = 0.42) 
+#than participants in the gay-men condition did (M = 0.56, SD = 0.41), 
+#t(1083) = 2.56, p < .05."
 #get t-statistic for the different conditions
 cond0_data <- filter(filtered_data, filtered_data$Condition == 0)
 cond1_data <- filter(filtered_data, filtered_data$Condition == 1)
 t_test_output <- t.test(cond0_data$IATscore,cond1_data$IATscore)
 t_test_output
+
+reported_t <- "2.56"
+obtained_t <- toString(round(2.4739, 2))
+
+#t statistic did not match original
+reportObject <- reproCheck(reportedValue = reported_t, obtainedValue = obtained_t, valueType = 't')
+
+#p value was okay
+reportObject <- reproCheck(reportedValue = "0.05", obtainedValue = "0.01352", valueType = "p", eyeballCheck = TRUE)
 ```
 
 
@@ -178,6 +223,15 @@ t_test_output
 #use anova to get f statistic
 fit <- aov(filtered_data$IATscore ~ filtered_data$Gender * filtered_data$Condition)
 summary(fit)
+
+reported_f <- "7.42"
+obtained_f <- toString(round(7.421, 2))
+
+#F statistic did match original
+reportObject <- reproCheck(reportedValue = reported_f, obtainedValue = obtained_f, valueType = 'F')
+
+#p value was okay
+reportObject <- reproCheck(reportedValue = "0.01", obtainedValue = "0.00655", valueType = "p", eyeballCheck = TRUE)
 ```
 
 ```{r}
@@ -188,24 +242,64 @@ summary(fit)
 #whereas among women, there was no significant difference in IAT 
 #scores between the two conditions, F(1, 1081) = 0.01, p = .92."
 
-#first compare means for the two conditions for the two genders
+#compare means for the two conditions for the two genders
 mean_IAT_score_cond_gender <- filtered_data %>%
   group_by(Condition, Gender) %>%
   summarise(mean_score_cond_gender = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
 
 mean_IAT_score_cond_gender
 
+#check for matches in mean and sd
+#gay men mean did match
+reported_lesbian_men_mean <- "0.67"
+obtained_lesbian_men_mean <- toString(round(0.6670967, 2))
+reportObject <- reproCheck(reportedValue = reported_lesbian_men_mean, obtainedValue = obtained_lesbian_men_mean, valueType = 'mean')
+
+#lesbian men sd did match
+reported_lesbian_men_sd <- "0.39"
+obtained_lesbian_men_sd <- toString(round(0.3906494, 2))
+reportObject <- reproCheck(reportedValue = reported_lesbian_men_sd, obtainedValue = obtained_lesbian_men_sd, valueType = 'sd')
+
+#gay men mean did match
+reported_gay_men_mean <- "0.53"
+obtained_gay_men_mean <- toString(round(0.5336297, 2))
+reportObject <- reproCheck(reportedValue = reported_gay_men_mean, obtainedValue = obtained_gay_men_mean, valueType = 'mean')
+
+#gay men sd did match
+reported_gay_men_sd <- "0.40"
+obtained_gay_men_sd <- toString(round(0.3996524, 2))
+reportObject <- reproCheck(reportedValue = reported_gay_men_sd, obtainedValue = obtained_gay_men_sd, valueType = 'sd')
+
+
 #separate men and women data
 men_data <- filter(filtered_data, filtered_data$Gender == 1)
 women_data <- filter(filtered_data, filtered_data$Gender == 2)
 
-#obtain f score for women
-fit_women <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
-summary(fit_women)
-
 #obtain f score for men
 fit_men <- aov(men_data$IATscore ~ men_data$Gender * men_data$Condition)
 summary(fit_men)
+fit_men_obtained_f <- "14.9"
+men_reported_f <- "13.61"
+
+#men's F-value did not match original
+reportObject <- reproCheck(reportedValue = men_reported_f, obtainedValue = fit_men_obtained_f, valueType = 'F')
+
+#p value was okay for men
+reportObject <- reproCheck(reportedValue = "0.001", obtainedValue = "0.000127", valueType = "p", eyeballCheck = TRUE)
+
+#obtain f score for women
+fit_women <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
+summary(fit_women)
+fit_women_obtained_f <- "0.009"
+women_reported_f <- "0.01"
+
+#women's F-value did match original
+reportObject <- reproCheck(reportedValue = women_reported_f, obtainedValue = fit_women_obtained_f, valueType = 'F')
+
+#women's p-value did match original
+fit_women_obtained_p <- "0.924"
+women_reported_p <- "0.92"
+reportObject <- reproCheck(reportedValue = women_reported_p, obtainedValue = fit_women_obtained_p, valueType = 'p')
 ```
 
 
@@ -213,7 +307,7 @@ summary(fit_men)
 
 [Please include a text summary describing your findings. If this reproducibility check was a failure, you should note any suggestions as to what you think the likely cause(s) might be.]
 
-This reproducibility check was mostly successful. We were able to replicate all of the implicit association findings except for one of the F-scores and one of the t-statistics. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher (14.9 vs. 13.61). The p-value reported (p < .001) is consistent with what we found. Also, we found a discrepancy between the t-statistic the authors reported and our value (t(1083) = 2.56 vs t(1081.6) = 2.47). Again, the p-value remains below 0.05, as the authors reported.
+This reproducibility check was mostly successful. We were able to replicate all of the implicit association findings except for one of the F-scores and one of the t-statistics. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher (14.9 vs. 13.61). Also, we found a discrepancy between the t-statistic the authors reported and our value (t(1083) = 2.56 vs t(1081.6) = 2.47). In all cases though our p-values either matched or met the same criteria as the original.
 
 The authors provided a list of exclusion criteria, but it appears they followed additional exclusion criteria they do not discuss in the paper. They excluded participants who did not list a gender on the survey. This additional exclusion criteria was needed to get the same participant count from the original paper.
   
