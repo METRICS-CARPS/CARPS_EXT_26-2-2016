@@ -48,9 +48,6 @@ to measure particpants' mental associations between the terms "gay" and
 ------
 
 #### Target outcomes: 
-
-[PILOT copy and paste the target outcomes identified in targetOutcomes.md]  
-
 The mean IAT score across both conditions was 0.59 (SD =
 0.42), which indicates that participants’ reaction times were,
 on average, 0.59 standard deviations faster when “gay” and
