@@ -132,6 +132,8 @@ use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
 use_names <- colnames(data)[use_indices]
 
 dim(data)
+dim(use_names)
+dim(ignore_indices)
 head(data)
 
 #IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
@@ -214,19 +216,18 @@ filtered_data_manual <- data[!is.element(data$id, bad_ids),]
 filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck1` > 4)
 filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck2` > 4)
 filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck3` < 4)
-filtered_data_manual <- data[data$IAT2766_status=="completed",]
+
 
 filtered_data <- filter(data, `Filter_$` == 1)
 dim(filtered_data_manual)
 dim(filtered_data)
-colnames(data)
 
 ```
 
 ## Descriptive statistics
 
 ```{r}
-mean(gathered_data$IATscore, na.rm=TRUE)
+
 ```
 
 ## Inferential statistics
