@@ -100,43 +100,13 @@ reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = 
 
 ```{r}
 data = read_sav("data/Same-Sex Marriage Dataset.sav")
+colnames(data)[1] = "id" #change col name to avoid @# label
 head(data)
 ```
 
 
-```{r}
-colnames(data)[1] = "id"
-```
-
 
 # Step 3: Tidy data
-```{r}
-# #get ERROR_latency columns
-# error_latency_cols <- colnames(data)[grep(glob2rx("*_ERROR_latency"), colnames(data))]
-# #get CORRECT_latency columns
-# correct_latency_cols <- colnames(data)[grep(glob2rx("*_CORRECT_latency"), colnames(data))]
-# #get stimulus columns
-# stimulus_cols <- colnames(data)[grep(glob2rx("*#*_stimulus"), colnames(data))]
-# #get latency columns
-# latency_cols <- colnames(data)[grep(glob2rx("*#[0-9]{1}_latency|*#[0-9]{2}_latency"), colnames(data))]
-# 
-# #get the names of all the columns for latency and stimuli
-# ignore_indices  <- append(grep(glob2rx("*_ERROR_latency"), colnames(data)), grep(glob2rx("*#*_stimulus"), colnames(data)))
-# ignore_indices <- append(ignore_indices, grep(glob2rx("*#*_latency"), colnames(data)))
-# ignore_indices <- append(ignore_indices, grep(glob2rx("*_CORRECT_latency"), colnames(data)))
-# ignore_indices <- unique(ignore_indices)
-# ignore_names <- colnames(data)[ignore_indices]
-# 
-# #get all the cols that don't have to do with the actual IAT trials
-# use_indices <- setdiff(seq(1,length(colnames(data))),ignore_indices)
-# use_names <- colnames(data)[use_indices]
-# 
-# dim(data)
-# #IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
-# #task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
-# #cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
-```
-
 ```{r}
 #subset the data to focus on the variables we care about
 #note that each row becomes a particular individual's IAT score rather than each question 
@@ -148,69 +118,25 @@ head(subset_data)
 dim(subset_data)
 ```
 
-```{r}
-#gathered_data <- data %>% 
-  #gather(task_name, value, c(ignore_names))
-
-#dim(gathered_data)
-#head(gathered_data)
-```
-
-
-```{r}
-#now we have rows, but we want things grouped by task/response
-#IAT_nums <- str_extract(error_latency_cols, "[0-9]{4}")
-#task_nums <- str_extract(error_latency_cols, "Task_[0-9]{1}")
-#cond_nums <- str_extract(error_latency_cols, "#[0-9]{1}")
-
-#unique(gathered_data["task_name"])
-#spread_data <- gathered_data %>%
-  #mutate(IAT_num = str_extract(task_name, "[0-9]{4}")) %>%
-  #mutate(task_nums = str_extract(task_name, "Task_[0-9]{1}")) %>%
-  #mutate(trial_nums = str_extract(task_name, "#[0-9][0-9]|#[0-9]")) %>%
-  #mutate(trial = str_extract(task_name, "IAT[0-9]{4}_Task_[0-9]{1}#[0-9][0-9]|IAT[0-9]{4}_Task_[0-9]{1}#[0-9]{1}")) %>%
-  #mutate(measurement_type = str_extract(task_name, "_ERROR_latency|_CORRECT_latency|_latency|_stimulus"))
-
-#dim(spread_data)
-#measurement_types = unique(spread_data["measurement_type"])
-#measurement_types
-#head(spread_data)
-#unique(spread_data["IAT_num"])
-#unique(spread_data["task_nums"])
-#unique(spread_data["trial_nums"])
-#unique(spread_data["trial"])
-```
-
 # Step 4: Run analysis
 
 ## Pre-processing
-
-[you can remove this section if no pre-processing is required]
-
 ```{r}
-# bad_ids = c(19,22,67,93,118,120,136,152,162,166,170,175,177,178,259,350,369,386,394,411,424,453,462,501,553,555,572,583,679,708,757,794,833,875,911,932,1010,1052,1092,1096,1123,1124,1201,1227,1267,1318,1322,1426)
-# filtered_data_manual <- data[!is.element(subset_data$id, bad_ids),]
-# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck1` > 4)
-# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck2` > 4)
-# filtered_data_manual <- filter(filtered_data_manual, `AttentionCheck3` < 4)
-# filtered_data_manual <- filter(filtered_data_manual, !is.na(filtered_data_manual$IATscore))
-#dim(filtered_data_manual)
-
 #use the provided filter column to filter data -- but also filter based on NA values
 filtered_data <- filter(subset_data, `Filter_$` == 1 & !is.na(Condition) & !is.na(IATscore) & !is.na(Gender))
-dim(filtered_data)
-
+dim(filtered_data) #data should be 1085 x 6
 ```
 
 
 ## Descriptive statistics
 
 ```{r}
-#analysis text:
-#The mean IAT score across both conditions was 0.59 (SD =0.42), which indicates that 
+#target outcome:
+#"The mean IAT score across both conditions was 0.59 (SD =0.42), which indicates that 
 #participants’ reaction times were,on average, 0.59 standard deviations faster when 
-#“gay” and “promiscuous” were paired than when “gay” and “monogamous” were paired.
+#“gay” and “promiscuous” were paired than when “gay” and “monogamous” were paired."
 
+#get the mean IAT score across all participants
 mean_IAT_score <- filtered_data %>%
   group_by(id) %>%
   summarise(mean_score_by_person = mean(IATscore, na.rm=TRUE)) %>%
@@ -222,57 +148,64 @@ mean_IAT_score
 
 ## Inferential statistics
 ```{r}
-#analysis text:
-#Participants in the lesbians condition showed slightly greater 
+#target outcome: 
+#"Participants in the lesbians condition showed slightly greater 
 #implicit associations between “gay” and “promiscuous” (M = 0.62, SD = 0.42) 
-#than participants in the gay-men condition did (M = 0.56, SD = 0.41), t(1083) = 2.56, p < .05.
+#than participants in the gay-men condition did (M = 0.56, SD = 0.41), 
+#t(1083) = 2.56, p < .05."
+
+#get means for different conditions
 mean_IAT_score_cond <- filtered_data %>%
   group_by(Condition) %>%
   summarise(mean_score_cond = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
 
 mean_IAT_score_cond
 
-
+#get t-statistic for the different conditions
 cond0_data <- filter(filtered_data, filtered_data$Condition == 0)
 cond1_data <- filter(filtered_data, filtered_data$Condition == 1)
-dim(cond0_data)
-dim(cond1_data)
-t.test(cond0_data$IATscore,cond1_data$IATscore)
-
+t_test_output <- t.test(cond0_data$IATscore,cond1_data$IATscore)
+t_test_output
 ```
 
 
 ```{r}
-#analysis text:
-#Follow-up analyses revealed that
-#this effect was qualified by a significant interaction with
-#gender, F(1, 1081) = 7.42, p < .01.
+#target outcome: 
+#"Follow-up analyses revealed that this effect was 
+#qualified by a significant interaction with
+#gender, F(1, 1081) = 7.42, p < .01."
+
+#use anova to get f statistic
 fit <- aov(filtered_data$IATscore ~ filtered_data$Gender * filtered_data$Condition)
 summary(fit)
 ```
 
 ```{r}
-#Among men, IAT scores
-#were significantly higher in the lesbians condition (M =
-#0.67, SD = 0.39) than in the gay-men condition (M = 0.53,
-#SD = 0.40), F(1, 1081) = 13.61, p < .001, whereas among
-#women, there was no significant difference in IAT scores
-#between the two conditions, F(1, 1081) = 0.01, p = .92.
+#target outcome: 
+#"Among men, IAT scores were significantly higher in the 
+#lesbians condition (M =0.67, SD = 0.39) than in the gay-men 
+#condition (M = 0.53, SD = 0.40), F(1, 1081) = 13.61, p < .001, 
+#whereas among women, there was no significant difference in IAT 
+#scores between the two conditions, F(1, 1081) = 0.01, p = .92."
+
+#first compare means for the two conditions for the two genders
 mean_IAT_score_cond_gender <- filtered_data %>%
   group_by(Condition, Gender) %>%
   summarise(mean_score_cond_gender = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
 
 mean_IAT_score_cond_gender
-dim(filtered_data)
-head(filtered_data)
+
+#separate men and women data
 men_data <- filter(filtered_data, filtered_data$Gender == 1)
 women_data <- filter(filtered_data, filtered_data$Gender == 2)
 
-fit <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
-summary(fit)
+#obtain f score for women
+fit_women <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
+summary(fit_women)
 
-fit <- aov(men_data$IATscore ~ men_data$Gender * men_data$Condition)
-summary(fit)
+#obtain f score for men
+fit_men <- aov(men_data$IATscore ~ men_data$Gender * men_data$Condition)
+summary(fit_men)
 ```
 
 
