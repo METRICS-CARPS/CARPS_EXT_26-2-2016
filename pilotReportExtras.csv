@@ -1,0 +1,2 @@
+articleID,pilotNames,copilotNames,pilotTTC,copilotTTC,pilotStartDate,copilotStartDate,completionDate,Author_Assistance,finalOutcome,Insufficient_Information_Errors,locus_typo,locus_specification,locus_analysis,locus_data,locus_unidentified,locus_typo_resolved,locus_specification_resolved,locus_analysis_resolved,locus_data_resolved,locus_unidentified_resolved
+EXT_26-2-2016,Mackenzie Leake,Marianna Zhang,1200,NA,0.6111111111111112,NA,0.1527777777777778,FALSE,Success without author assistance,0,0,1,2,0,2,NA,NA,NA,NA,NA
