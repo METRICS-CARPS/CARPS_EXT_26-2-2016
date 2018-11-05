@@ -154,19 +154,21 @@ mean_IAT_score_cond
 #check for matches in mean and sd
 #all means and sd in this section matched
 reported_condition_mean_lesbian <- "0.62"
-obtained_condition_mean_lesbian <- toString(round(0.6208839, 2))
+obtained_condition_mean_lesbian <- mean_IAT_score_cond$mean_score_cond[1]
+
 reportObject <- reproCheck(reportedValue = reported_condition_mean_lesbian, obtainedValue = obtained_condition_mean_lesbian, valueType = 'mean')
 
 reported_condition_sd_lesbian <- "0.42"
-obtained_condition_sd_lesbian <- toString(round(0.4202455, 2))
+obtained_condition_sd_lesbian <- mean_IAT_score_cond$sd_score_cond[1]
+
 reportObject <- reproCheck(reportedValue = reported_condition_sd_lesbian, obtainedValue = obtained_condition_sd_lesbian, valueType = 'sd')
 
 reported_condition_mean_gay <- "0.56"
-obtained_condition_mean_gay <- toString(round(0.5585792, 2))
+obtained_condition_mean_gay <- mean_IAT_score_cond$mean_score_cond[2]
 reportObject <- reproCheck(reportedValue = reported_condition_mean_gay, obtainedValue = obtained_condition_mean_gay, valueType = 'mean')
 
 reported_condition_sd_gay <- "0.41"
-obtained_condition_sd_gay <- toString(round(0.4092079, 2))
+obtained_condition_sd_gay <- mean_IAT_score_cond$sd_score_cond[2]
 reportObject <- reproCheck(reportedValue = reported_condition_sd_gay, obtainedValue = obtained_condition_sd_gay, valueType = 'sd')
 
 ```
@@ -248,25 +250,23 @@ mean_IAT_score_cond_gender
 #check for matches in mean and sd
 #gay men mean did match
 reported_lesbian_men_mean <- "0.67"
-obtained_lesbian_men_mean <- toString(round(0.6670967, 2))
+obtained_lesbian_men_mean <- mean_IAT_score_cond_gender$mean_score_cond_gender[1]
 reportObject <- reproCheck(reportedValue = reported_lesbian_men_mean, obtainedValue = obtained_lesbian_men_mean, valueType = 'mean')
 
 #lesbian men sd did match
 reported_lesbian_men_sd <- "0.39"
-obtained_lesbian_men_sd <- toString(round(0.3906494, 2))
+obtained_lesbian_men_sd <- mean_IAT_score_cond_gender$sd_score_cond[1]
 reportObject <- reproCheck(reportedValue = reported_lesbian_men_sd, obtainedValue = obtained_lesbian_men_sd, valueType = 'sd')
 
 #gay men mean did match
 reported_gay_men_mean <- "0.53"
-obtained_gay_men_mean <- toString(round(0.5336297, 2))
+obtained_gay_men_mean <- mean_IAT_score_cond_gender$mean_score_cond_gender[3]
 reportObject <- reproCheck(reportedValue = reported_gay_men_mean, obtainedValue = obtained_gay_men_mean, valueType = 'mean')
 
 #gay men sd did match
 reported_gay_men_sd <- "0.40"
-obtained_gay_men_sd <- toString(round(0.3996524, 2))
+obtained_gay_men_sd <- mean_IAT_score_cond_gender$sd_score_cond[3]
 reportObject <- reproCheck(reportedValue = reported_gay_men_sd, obtainedValue = obtained_gay_men_sd, valueType = 'sd')
-
-
 
 
 #separate men and women data
@@ -294,8 +294,6 @@ reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained
 
 #p value was okay for men
 reportObject <- reproCheck(reportedValue = "0.001", obtainedValue = "0.000127", valueType = "p", eyeballCheck = TRUE)
-
-
 
 
 #obtain f score for women
@@ -326,7 +324,7 @@ reportObject <- reproCheck(reportedValue = women_reported_p, obtainedValue = fit
 
 # Step 5: Conclusion
 
-This reproducibility check was mostly successful. We were able to replicate all of the implicit association findings except for one of the F-scores and its degrees of freedom, and one of the t-statistics. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher (14.9 vs. 13.61). Also, we found a discrepancy between the t-statistic the authors reported and our value (t(1083) = 2.56 vs t(1081.6) = 2.47). In all cases though our p-values either matched or met the same criteria as the original.
+This reproducibility check was mostly successful. We were able to replicate most of the implicit association findings. There were two major differences for the degrees of freedom for comparing the two gender groups across the two conditions. We performed the comparisons separately for men and women, which likely led to the difference, as our degrees of freedom corresponded to the size of the men and women groups as opposed to the combined count. There were minor differences for one of the t-statistics and f statistics and their degrees of freedom. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher. Also, we found a discrepancy between the t-statistic the authors reported and our value. In all cases though our p-values either matched or met the same criteria as the original.
 
 The authors provided a list of exclusion criteria, but it appears they followed additional exclusion criteria they do not discuss in the paper. They excluded participants who did not list a gender on the survey. This additional exclusion criteria was needed to get the same participant count from the original paper.
 
