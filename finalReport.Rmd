@@ -1,0 +1,395 @@
+---
+title: "CARPS Reproducibility Report"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Report Details
+
+This reproducibility report attempts to reproduce the target results of Pinsof & Haselton (2016), published in Psychological Science. The repository for this reproducibility project can be found [on GitHub](https://github.com/mleake/CARPS_EXT_26-2-2016).
+
+```{r}
+articleID <- "EXT_26-2-2016" # insert the article ID code here e.g., "10-3-2015_PS"
+reportType <- "final" # specify whether this is the 'pilot' report or 'final' report
+pilotNames <- "Mackenzie Leake" # insert the pilot's name here e.g., "Tom Hardwicke".  If there are multiple cpilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+copilotNames <- "Marianna Zhang" # # insert the co-pilot's name here e.g., "Michael Frank". If there are multiple co-pilots enter both names in a character string e.g., "Tom Hardwicke, Bob Dylan"
+pilotTTC <- 1200 # insert the pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+copilotTTC <- 60 # insert the co-pilot's estimated time to complete (in minutes, fine to approximate) e.g., 120
+pilotStartDate <- as.Date("11/01/18", format = "%m/%d/%y") # insert the pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+copilotStartDate <- as.Date("11/04/18", format = "%m/%d/%y") # insert the co-pilot's start date in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+completionDate <- as.Date("11/04/18", format = "%m/%d/%y") # copilot insert the date of final report completion (after any necessary rounds of author assistance) in US format e.g., as.Date("01/25/18", format = "%m/%d/%y")
+```
+
+------
+
+#### Methods summary: 
+
+The authors designed a custom Implicit Association Test (IAT) to measure participants' implicit associations between homosexuality and sexual promiscuity. They randomly assigned participants to either the "gay men" or "lesbian" condition. There were four trials in the IAT. For two trials the words "gay" and "promiscuous" were presented on one side of the screen, and the words "straight" and "monogamous" were presented on the other side of the screen, and for the other two trials the words were placed on opposite sides. In each trial participants saw five words related to either promiscuity or monogamy and images of gay or lesbian couples. The authors compared the response times of associations between "gay" and "promiscuous" and "gay" and "monogamous" to measure particpants' mental associations between the terms "gay" and "promiscuous." The study was conducted on MTurk with a final sample size of 1085 participants.
+
+------
+
+#### Target outcomes: 
+>The mean IAT score across both conditions was 0.59 (SD =
+0.42), which indicates that participants' reaction times were,
+on average, 0.59 standard deviations faster when "gay" and
+"promiscuous" were paired than when "gay" and "monogamous"
+were paired. Participants in the lesbians condition
+showed slightly greater implicit associations between "gay"
+and "promiscuous" (M = 0.62, SD = 0.42) than participants
+in the gay-men condition did (M = 0.56, SD = 0.41),
+t(1083) = 2.56, p < .05. Follow-up analyses revealed that
+this effect was qualified by a significant interaction with
+gender, F(1, 1081) = 7.42, p < .01. Among men, IAT scores
+were significantly higher in the lesbians condition (M =
+0.67, SD = 0.39) than in the gay-men condition (M = 0.53,
+SD = 0.40), F(1, 1081) = 13.61, p < .001, whereas among
+women, there was no significant difference in IAT scores
+between the two conditions, F(1, 1081) = 0.01, p = .92. (from Pinsof & Haselton, 2016, p. 438)
+------
+
+
+```{r global_options, include=FALSE}
+# sets up some formatting options for the R Markdown document
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+# Step 1: Load packages and prepare report object
+
+```{r}
+# load packages
+library(tidyverse) # for data munging
+library(knitr) # for kable table formating
+library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
+library(readxl) # import excel files
+library(CARPSreports) # custom report functions
+```
+
+```{r}
+# Prepare report object. This will be updated automatically by the reproCheck function each time values are compared
+reportObject <- data.frame(dummyRow = TRUE, reportedValue = NA, obtainedValue = NA, valueType = NA, percentageError = NA, comparisonOutcome = NA, eyeballCheck = NA)
+```
+
+# Step 2: Load data
+
+```{r}
+data = read_sav("data/Same-Sex Marriage Dataset.sav")
+colnames(data)[1] = "id" #change col name to avoid @# label
+head(data)
+```
+
+
+
+# Step 3: Tidy data
+```{r}
+#subset the data to focus on the variables we care about
+#note that each row becomes a particular individual's IAT score rather than each question 
+#of the test (i.e., there's a 1-1 mapping for id to IAT score)
+subset_data <- data %>%
+  select(id, Condition, Gender, SexualOrientation, `Filter_$`, IATscore)
+
+head(subset_data)
+dim(subset_data)
+```
+
+# Step 4: Run analysis
+
+## Pre-processing
+```{r}
+#use the provided filter column to filter data -- but also filter based on NA values
+filtered_data <- subset_data %>% 
+  filter(`Filter_$` == 1 & 
+           !is.na(Condition) & 
+           !is.na(IATscore) & 
+           !is.na(Gender))
+dim(filtered_data) #data should be 1085 x 6
+```
+
+
+## Descriptive statistics
+
+```{r}
+#target outcome:
+#"The mean IAT score across both conditions was 0.59 (SD =0.42), which indicates that 
+#participants' reaction times were,on average, 0.59 standard deviations faster when 
+#"gay" and "promiscuous" were paired than when "gay" and "monogamous" were paired."
+
+#get the mean IAT score across all participants
+mean_IAT_score <- filtered_data %>%
+  group_by(id) %>%
+  summarise(mean_score_by_person = mean(IATscore, na.rm=TRUE)) %>%
+  summarise(mean_score = mean(mean_score_by_person, na.rm=TRUE), 
+            sd_score = sd(mean_score_by_person, na.rm = TRUE))
+
+mean_IAT_score
+
+#check for matches in mean and sd
+#all means and sd in this section matched
+reported_person_mean <- "0.59"
+obtained_person_mean <- toString(round(0.589588, 2))
+reportObject <- reproCheck(reportedValue = reported_person_mean, obtainedValue = obtained_person_mean, valueType = 'mean')
+
+reported_person_sd <- "0.42"
+obtained_person_sd <- toString(round(0.4157165, 2))
+reportObject <- reproCheck(reportedValue = reported_person_sd, obtainedValue = obtained_person_sd, valueType = 'sd')
+```
+
+
+```{r}
+#target outcome: 
+#"Participants in the lesbians condition showed slightly greater 
+#implicit associations between "gay" and "promiscuous" (M = 0.62, SD = 0.42) 
+#than participants in the gay-men condition did (M = 0.56, SD = 0.41), 
+#t(1083) = 2.56, p < .05."
+
+#get means for different conditions
+mean_IAT_score_cond <- filtered_data %>%
+  group_by(Condition) %>%
+  summarise(mean_score_cond = mean(IATscore, na.rm=TRUE), 
+            sd_score_cond = sd(IATscore, na.rm = TRUE))
+
+mean_IAT_score_cond
+
+#check for matches in mean and sd
+#all means and sd in this section matched
+reported_condition_mean_lesbian <- "0.62"
+obtained_condition_mean_lesbian <- toString(round(0.6208839, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_mean_lesbian, obtainedValue = obtained_condition_mean_lesbian, valueType = 'mean')
+
+reported_condition_sd_lesbian <- "0.42"
+obtained_condition_sd_lesbian <- toString(round(0.4202455, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_sd_lesbian, obtainedValue = obtained_condition_sd_lesbian, valueType = 'sd')
+
+reported_condition_mean_gay <- "0.56"
+obtained_condition_mean_gay <- toString(round(0.5585792, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_mean_gay, obtainedValue = obtained_condition_mean_gay, valueType = 'mean')
+
+reported_condition_sd_gay <- "0.41"
+obtained_condition_sd_gay <- toString(round(0.4092079, 2))
+reportObject <- reproCheck(reportedValue = reported_condition_sd_gay, obtainedValue = obtained_condition_sd_gay, valueType = 'sd')
+
+```
+
+## Inferential statistics
+```{r}
+#target outcome (cont'd): 
+#"Participants in the lesbians condition showed slightly greater 
+#implicit associations between "gay" and "promiscuous" (M = 0.62, SD = 0.42) 
+#than participants in the gay-men condition did (M = 0.56, SD = 0.41), 
+#t(1083) = 2.56, p < .05."
+#get t-statistic for the different conditions
+cond0_data <- filter(filtered_data, filtered_data$Condition == 0)
+cond1_data <- filter(filtered_data, filtered_data$Condition == 1)
+t_test_output <- t.test(cond0_data$IATscore,cond1_data$IATscore)
+t_test_output
+
+reported_t <- "2.56"
+obtained_t <- toString(round(2.4739, 2))
+
+#t statistic did not match original
+reportObject <- reproCheck(reportedValue = reported_t, obtainedValue = obtained_t, valueType = 't')
+
+#df did not match original
+reported_df <- "1083"
+obtained_df <- toString(round(1081.6, 2))
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#p value was okay
+reportObject <- reproCheck(reportedValue = "<.05", obtainedValue = "0.01352", valueType = "p", eyeballCheck = TRUE)
+```
+
+
+```{r}
+#target outcome: 
+#"Follow-up analyses revealed that this effect was 
+#qualified by a significant interaction with
+#gender, F(1, 1081) = 7.42, p < .01."
+
+#use anova to get f statistic
+fit <- aov(filtered_data$IATscore ~ filtered_data$Gender * filtered_data$Condition)
+summary(fit)
+
+reported_f <- "7.42"
+obtained_f <- toString(round(7.421, 2))
+
+#F statistic did match original
+reportObject <- reproCheck(reportedValue = reported_f, obtainedValue = obtained_f, valueType = 'F')
+
+#df within-group
+reported_df <- "1"
+obtained_df <- "1"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#df between-group
+reported_df <- "1081"
+obtained_df <- "1081"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#p value was okay
+reportObject <- reproCheck(reportedValue = "<.01", obtainedValue = "0.00655", valueType = "p", eyeballCheck = TRUE)
+```
+
+```{r}
+#target outcome: 
+#"Among men, IAT scores were significantly higher in the 
+#lesbians condition (M =0.67, SD = 0.39) than in the gay-men 
+#condition (M = 0.53, SD = 0.40), F(1, 1081) = 13.61, p < .001, 
+#whereas among women, there was no significant difference in IAT 
+#scores between the two conditions, F(1, 1081) = 0.01, p = .92."
+
+#compare means for the two conditions for the two genders
+mean_IAT_score_cond_gender <- filtered_data %>%
+  group_by(Condition, Gender) %>%
+  summarise(mean_score_cond_gender = mean(IATscore, na.rm=TRUE), sd_score_cond = sd(IATscore, na.rm = TRUE))
+
+mean_IAT_score_cond_gender
+
+#check for matches in mean and sd
+#gay men mean did match
+reported_lesbian_men_mean <- "0.67"
+obtained_lesbian_men_mean <- toString(round(0.6670967, 2))
+reportObject <- reproCheck(reportedValue = reported_lesbian_men_mean, obtainedValue = obtained_lesbian_men_mean, valueType = 'mean')
+
+#lesbian men sd did match
+reported_lesbian_men_sd <- "0.39"
+obtained_lesbian_men_sd <- toString(round(0.3906494, 2))
+reportObject <- reproCheck(reportedValue = reported_lesbian_men_sd, obtainedValue = obtained_lesbian_men_sd, valueType = 'sd')
+
+#gay men mean did match
+reported_gay_men_mean <- "0.53"
+obtained_gay_men_mean <- toString(round(0.5336297, 2))
+reportObject <- reproCheck(reportedValue = reported_gay_men_mean, obtainedValue = obtained_gay_men_mean, valueType = 'mean')
+
+#gay men sd did match
+reported_gay_men_sd <- "0.40"
+obtained_gay_men_sd <- toString(round(0.3996524, 2))
+reportObject <- reproCheck(reportedValue = reported_gay_men_sd, obtainedValue = obtained_gay_men_sd, valueType = 'sd')
+
+
+
+
+#separate men and women data
+men_data <- filter(filtered_data, filtered_data$Gender == 1)
+women_data <- filter(filtered_data, filtered_data$Gender == 2)
+
+#obtain f score for men
+fit_men <- aov(men_data$IATscore ~ men_data$Gender * men_data$Condition)
+summary(fit_men)
+fit_men_obtained_f <- "14.9"
+men_reported_f <- "13.61"
+
+#men's F-value did not match original
+reportObject <- reproCheck(reportedValue = men_reported_f, obtainedValue = fit_men_obtained_f, valueType = 'F')
+
+#df within-group did match
+reported_df <- "1"
+obtained_df <- "1"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#df between-group did not match
+reported_df <- "1081"
+obtained_df <- "521"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#p value was okay for men
+reportObject <- reproCheck(reportedValue = "0.001", obtainedValue = "0.000127", valueType = "p", eyeballCheck = TRUE)
+
+
+
+
+#obtain f score for women
+fit_women <- aov(women_data$IATscore ~ women_data$Gender * women_data$Condition)
+summary(fit_women)
+fit_women_obtained_f <- "0.009"
+women_reported_f <- "0.01"
+
+#women's F-value did match original
+reportObject <- reproCheck(reportedValue = women_reported_f, obtainedValue = fit_women_obtained_f, valueType = 'F')
+
+#df within-group did match
+reported_df <- "1"
+obtained_df <- "1"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#df between-group did not match
+reported_df <- "1081"
+obtained_df <- "560"
+reportObject <- reproCheck(reportedValue = reported_df, obtainedValue = obtained_df, valueType = 'df')
+
+#women's p-value did match original
+fit_women_obtained_p <- "0.924"
+women_reported_p <- "0.92"
+reportObject <- reproCheck(reportedValue = women_reported_p, obtainedValue = fit_women_obtained_p, valueType = 'p')
+```
+
+
+# Step 5: Conclusion
+
+This reproducibility check was mostly successful. We were able to replicate all of the implicit association findings except for one of the F-scores and its degrees of freedom, and one of the t-statistics. The cause of these discrepancies is unclear. It appears that the F-score reported in the paper for the comparison between the men gay and lesbian conditions is the sum of the F-scores for the Condition and Gender-Condition rows of the ANOVA result table. However, the F-score we compute is slightly higher (14.9 vs. 13.61). Also, we found a discrepancy between the t-statistic the authors reported and our value (t(1083) = 2.56 vs t(1081.6) = 2.47). In all cases though our p-values either matched or met the same criteria as the original.
+
+The authors provided a list of exclusion criteria, but it appears they followed additional exclusion criteria they do not discuss in the paper. They excluded participants who did not list a gender on the survey. This additional exclusion criteria was needed to get the same participant count from the original paper.
+
+```{r}
+Author_Assistance = FALSE # was author assistance provided? (if so, enter TRUE)
+
+Insufficient_Information_Errors <- 0 # how many discrete insufficient information issues did you encounter?
+
+# Assess the causal locus (discrete reproducibility issues) of any reproducibility errors. Note that there doesn't necessarily have to be a one-to-one correspondance between discrete reproducibility issues and reproducibility errors. For example, it could be that the original article neglects to mention that a Greenhouse-Geisser correct was applied to ANOVA outcomes. This might result in multiple reproducibility errors, but there is a single causal locus (discrete reproducibility issue).
+
+locus_typo <- 0 # how many discrete issues did you encounter that related to typographical errors?
+locus_specification <- 1 # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis <- 2 # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data <- 0 # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified <- 4 # how many discrete issues were there for which you could not identify the cause
+
+# How many of the above issues were resolved through author assistance?
+locus_typo_resolved <- NA # how many discrete issues did you encounter that related to typographical errors?
+locus_specification_resolved <- NA # how many discrete issues did you encounter that related to incomplete, incorrect, or unclear specification of the original analyses?
+locus_analysis_resolved <- NA # how many discrete issues did you encounter that related to errors in the authors' original analyses?
+locus_data_resolved <- NA # how many discrete issues did you encounter that related to errors in the data files shared by the authors?
+locus_unidentified_resolved <- NA # how many discrete issues were there for which you could not identify the cause
+
+Affects_Conclusion <- FALSE # Do any reproducibility issues encounter appear to affect the conclusions made in the original article? TRUE, FALSE, or NA. This is a subjective judgement, but you should taking into account multiple factors, such as the presence/absence of decision errors, the number of target outcomes that could not be reproduced, the type of outcomes that could or could not be reproduced, the difference in magnitude of effect sizes, and the predictions of the specific hypothesis under scrutiny.
+```
+
+```{r}
+reportObject <- reportObject %>%
+  filter(dummyRow == FALSE) %>% # remove the dummy row
+  select(-dummyRow) %>% # remove dummy row designation
+  mutate(articleID = articleID) %>% # add variables to report 
+  select(articleID, everything()) # make articleID first column
+
+# decide on final outcome
+if(any(reportObject$comparisonOutcome %in% c("MAJOR_ERROR", "DECISION_ERROR")) | Insufficient_Information_Errors > 0){
+  finalOutcome <- "Failure without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Failure despite author assistance"
+  }
+}else{
+  finalOutcome <- "Success without author assistance"
+  if(Author_Assistance == T){
+    finalOutcome <- "Success with author assistance"
+  }
+}
+
+# collate report extra details
+reportExtras <- data.frame(articleID, pilotNames, copilotNames, pilotTTC, copilotTTC, pilotStartDate, copilotStartDate, completionDate, Author_Assistance, finalOutcome, Insufficient_Information_Errors, locus_typo, locus_specification, locus_analysis, locus_data, locus_unidentified, locus_typo_resolved, locus_specification_resolved, locus_analysis_resolved, locus_data_resolved, locus_unidentified_resolved)
+
+# save report objects
+if(reportType == "pilot"){
+  write_csv(reportObject, "pilotReportDetailed.csv")
+  write_csv(reportExtras, "pilotReportExtras.csv")
+}
+
+if(reportType == "final"){
+  write_csv(reportObject, "finalReportDetailed.csv")
+  write_csv(reportExtras, "finalReportExtras.csv")
+}
+```
+
+# Session information
+
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
